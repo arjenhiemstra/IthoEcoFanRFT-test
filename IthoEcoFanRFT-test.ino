@@ -46,10 +46,10 @@ IthoCC1101 rf;
 IthoPacket packet;
 
 /*
- * 
- * BEGIN USER SETTINGS
- * 
- */
+
+   BEGIN USER SETTINGS
+
+*/
 #define SOFTWARE_VERSION "0.1"
 #define DEBUG 2
 //#define MQTT_ENABLE
@@ -58,7 +58,7 @@ IthoPacket packet;
 
 // WIFI
 #define CONFIG_WIFI_SSID "SSID"
-#define CONFIG_WIFI_PASS "PASSWORD"
+#define CONFIG_WIFI_PASS "PASS0000"
 #define CONFIG_HOST_NAME "ESP-ITHO"
 // MQTT
 
@@ -88,10 +88,10 @@ const uint8_t RFTidRFTRV[] = {151, 149, 65}; // rft-rv
 #define DEVICE_ID3 42
 
 /*
- * 
- * END USER SETTINGS
- * 
- */
+
+   END USER SETTINGS
+
+*/
 
 
 // WIFI
@@ -198,14 +198,14 @@ void setup(void) {
     Serial.print("Hostname: ");
     Serial.println(espName);
 
-  }  
+  }
   delay(2000);
   configTime(0, 0, "pool.ntp.org");
 #endif
 
 
   Serial.println("\n*** setup RF ***\n");
-  rf.setDeviceID(DEVICE_ID1,DEVICE_ID2,DEVICE_ID3); //DeviceID used to send commands, can also be changed on the fly for multi itho control
+  rf.setDeviceID(DEVICE_ID1, DEVICE_ID2, DEVICE_ID3); //DeviceID used to send commands, can also be changed on the fly for multi itho control
   rf.init();
 
 
@@ -238,28 +238,39 @@ void setup(void) {
   Serial.println("\n*** setup done ***\n");
 
   pinMode(ITHO_IRQ_PIN, INPUT);
-  attachInterrupt(ITHO_IRQ_PIN, ITHOcheck, FALLING);
+  attachInterrupt(ITHO_IRQ_PIN, ITHOcheck, RISING);
+  //rf.setCCcalEnable(1);
+
 }
+
+bool cccal = true;
+
 
 void loop(void) {
   delay(0);
   server.handleClient();
-  
+
   loopstart = millis();
-//  if (loopstart - sendCmd > 10000) {
+//  if (loopstart - sendCmd > 1000 && cccal) {
 //    sendCmd = loopstart;
-//    sendLowSpeed();
+//    if(rf.getCCcalFinised()) {
+//      cccal = false;
+//    }    
+//    printf("getCCcalEnabled(): %d\n", rf.getCCcalEnabled());
+//    printf("getCCcalFinised(): %d\n", rf.getCCcalFinised());
+//    printf("cal_task timeout timer: %lu\n", rf.getCCcalTimer());
+//
 //  }
   // do whatever you want, check (and reset) the ITHOhasPacket flag whenever you like
   if (ITHOhasPacket) {
     showPacket();
   }
-#if defined (MQTT_ENABLE)    
+#if defined (MQTT_ENABLE)
   if (!mqttclient.connected()) {
     reconnect();
   }
   mqttclient.loop();
-#endif  
+#endif
 }
 
 #if defined (ESP8266)
@@ -267,7 +278,9 @@ ICACHE_RAM_ATTR void ITHOcheck() {
 #else
 void ITHOcheck() {
 #endif
-  ITHOhasPacket = true;
+  if (rf.receivePacket()) {
+    ITHOhasPacket = true;
+  }
 }
 
 
@@ -337,62 +350,62 @@ ICACHE_RAM_ATTR void showPacket() {
       }
     }
     if (DEBUG == 2) { //activate DEBUG=2 if you want to see all remotes and commands back in the log
-      if (cmd != IthoUnknown) {
-        printTime();
-        if (chk) {
-          Serial.print(F("Known remote: "));
-          Serial.print(origin[originIDX]);
-        }
-        else {
-          Serial.print(F("Unknown remote"));
-        }
-        Serial.print(F(" / known command: "));
-        switch (cmd) {
-          case IthoStandby:
-            Serial.print("standby/auto\n");
-            break;
-          case IthoLow:
-            Serial.print("low\n");
-            break;
-          case IthoMedium:
-            Serial.print("medium\n");
-            break;
-          case IthoHigh:
-            Serial.print("high\n");
-            break;
-          case IthoFull:
-            Serial.print("full\n");
-            break;
-          case IthoTimer1:
-            Serial.print("timer1\n");
-            break;
-          case IthoTimer2:
-            Serial.print("timer2\n");
-            break;
-          case IthoTimer3:
-            Serial.print("timer3\n");
-            break;
-          case IthoJoin:
-            Serial.print("join\n");
-            break;
-          case IthoLeave:
-            Serial.print("leave\n");
-            break;
-        }
-      }
-      else {
-        printTime();
-        if (chk) {
-          Serial.print(F("Known remote: "));
-          Serial.print(origin[originIDX]);
-          Serial.println(F(" / unknown command:"));
-        }
-        else {
-          Serial.println(F("Unknown remote / unknown command:"));
-        }
-      }
+//      if (cmd != IthoUnknown) {
+//        printTime();
+//        if (chk) {
+//          Serial.print(F("Known remote: "));
+//          Serial.print(origin[originIDX]);
+//        }
+//        else {
+//          Serial.print(F("Unknown remote"));
+//        }
+//        Serial.print(F(" / known command: "));
+//        switch (cmd) {
+//          case IthoStandby:
+//            Serial.print("standby/auto\n");
+//            break;
+//          case IthoLow:
+//            Serial.print("low\n");
+//            break;
+//          case IthoMedium:
+//            Serial.print("medium\n");
+//            break;
+//          case IthoHigh:
+//            Serial.print("high\n");
+//            break;
+//          case IthoFull:
+//            Serial.print("full\n");
+//            break;
+//          case IthoTimer1:
+//            Serial.print("timer1\n");
+//            break;
+//          case IthoTimer2:
+//            Serial.print("timer2\n");
+//            break;
+//          case IthoTimer3:
+//            Serial.print("timer3\n");
+//            break;
+//          case IthoJoin:
+//            Serial.print("join\n");
+//            break;
+//          case IthoLeave:
+//            Serial.print("leave\n");
+//            break;
+//        }
+//      }
+//      else {
+//        printTime();
+//        if (chk) {
+//          Serial.print(F("Known remote: "));
+//          Serial.print(origin[originIDX]);
+//          Serial.println(F(" / unknown command:"));
+//        }
+//        else {
+//          Serial.println(F("Unknown remote / unknown command:"));
+//        }
+//      }
       printTime();
-      Serial.println(rf.LastMessageDecoded());
+      Serial.print(rf.LastMessageDecoded());
     }
   }
 }
@@ -418,57 +431,57 @@ void sendLeave() {
 void sendStandbySpeed() {
   rf.sendCommand(IthoStandby);
   CurrentState = "Standby";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
- #endif 
+#endif
   Serial.println("sending standby done.");
 }
 
 void sendLowSpeed() {
   rf.sendCommand(IthoLow);
   CurrentState = "Low";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
- #endif 
+#endif
   Serial.println("sending low done.");
 }
 
 void sendMediumSpeed() {
   rf.sendCommand(IthoMedium);
   CurrentState = "Medium";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
- #endif 
+#endif
   Serial.println("sending medium done.");
 }
 
 void sendHighSpeed() {
   rf.sendCommand(IthoHigh);
   CurrentState = "High";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
- #endif 
+#endif
   Serial.println("sending high done.");
 }
 
 void sendFullSpeed() {
   rf.sendCommand(IthoFull);
   CurrentState = "Full";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
-#endif  
+#endif
   Serial.println("sending FullSpeed done.");
 }
 
 void sendTimer1() {
   rf.sendCommand(IthoTimer1);
   CurrentState = "Timer1";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
 #endif
@@ -477,19 +490,19 @@ void sendTimer1() {
 void sendTimer2() {
   rf.sendCommand(IthoTimer2);
   CurrentState = "Timer2";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
-#endif  
+#endif
   Serial.println("sending timer2 done.");
 }
 void sendTimer3() {
   rf.sendCommand(IthoTimer3);
   CurrentState = "Timer3";
-#if defined (MQTT_ENABLE)  
+#if defined (MQTT_ENABLE)
   mqttclient.publish(statetopic, CurrentState.c_str());
   mqttclient.publish(idindextopic, "0");
-#endif  
+#endif
   Serial.println("sending timer3 done.");
 }
 

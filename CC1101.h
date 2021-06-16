@@ -186,7 +186,7 @@ class CC1101
 		void readBurstRegister(uint8_t* buffer, uint8_t address, uint8_t length);
 		
 		void sendData(CC1101Packet *packet);
-		uint8_t receiveData(CC1101Packet* packet, uint8_t length);
+    size_t readData(CC1101Packet* packet, size_t len);
 	
 	private:
 		CC1101( const CC1101 &c );
